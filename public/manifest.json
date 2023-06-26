@@ -1,0 +1,10 @@
+{
+  "short_name": "Ploductivity",
+  "name": "Ploductivity",
+  "description": "Ploductivity helps you accomplish large feats, a little at a time.",
+  "icons": [],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}

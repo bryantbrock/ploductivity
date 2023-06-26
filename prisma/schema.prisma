@@ -1,0 +1,75 @@
+// Provider: PlanetSclae
+//   All many-to-many relations must be explicit
+//   https://www.prisma.io/docs/concepts/components/prisma-schema/relations#many-to-many-relations
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider      = "mysql"
+  url           = env("DATABASE_URL")
+  relationMode  = "prisma"
+}
+
+model Plodder {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  clerkId   String    @unique
+  activity  Activity[]
+}
+
+model Activity {
+  id            Int                   @id @default(autoincrement())
+  createdAt     DateTime              @default(now())
+  deletedAt     DateTime?
+  title         String
+  description   String
+  categoryId    Int?
+  category      Cateogry?            @relation(fields: [categoryId], references: [id])
+  plodderId     Int
+  plodder       Plodder               @relation(fields: [plodderId], references: [id])
+  blockers      ActivityToActivity[]  @relation("Blockers")
+  dependencies  ActivityToActivity[]  @relation("Dependents")
+  steps         Step[]
+
+  @@index([categoryId])
+  @@index([plodderId])
+}
+
+model Cateogry {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  name      String
+  activities Activity[]
+}
+
+model ActivityToActivity {
+  id            Int         @id @default(autoincrement())
+  createdAt     DateTime    @default(now())
+  deletedAt     DateTime?
+  blockerId     Int
+  blocker       Activity    @relation("Blockers", fields: [blockerId], references: [id])
+  dependentId   Int
+  dependent     Activity    @relation("Dependents", fields: [dependentId], references: [id])
+
+  @@index([blockerId])
+  @@index([dependentId])
+}
+
+model Step {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+  snoozedTill DateTime?
+  title       String
+  description Float
+  position    Int
+  duration    Int?
+  activityId  Int
+  activity    Activity @relation(fields: [activityId], references: [id])
+
+  @@index([activityId])
+}
