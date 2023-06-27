@@ -99,7 +99,7 @@ export const theme = extendTheme({
           container: {
             _focusWithin: {
               label: {
-                color: "indigo.600",
+                color: "blue.600",
                 transform: "scale(0.85) translateY(-21px)",
               },
             },
@@ -123,13 +123,13 @@ export const theme = extendTheme({
       },
     },
     Input: {
-      defaultProps: { focusBorderColor: "#15506C" },
+      defaultProps: { focusBorderColor: "#4CA6CB" },
     },
     Switch: {
       defaultProps: { colorScheme: "blue" },
     },
     Textarea: {
-      defaultProps: { focusBorderColor: "#15506C" },
+      defaultProps: { focusBorderColor: "#4CA6CB" },
     },
     Modal: modalTheme,
   },

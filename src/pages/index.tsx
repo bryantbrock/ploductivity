@@ -1,15 +1,24 @@
-import { Box, Center, Flex, Skeleton, Text } from "@chakra-ui/react";
+import { Box, Button, Center, Flex, Skeleton, Text } from "@chakra-ui/react";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { useFindManyActivitys } from "prisma-hooks";
+import { useDeleteActivity, useFindManyActivitys } from "prisma-hooks";
 import { useUser } from "@/hooks/useUser";
-import { AddActivityModal } from "@/modules/activities/components/AddActivityModal";
+import { ActivityItem } from "@/modules/activities/components/AcitivityItem";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
+import { useState } from "react";
+import { Activity } from "@prisma/client";
+import { ActivityForm } from "@/modules/activities/components/ActivityForm";
+import { AddIcon } from "@chakra-ui/icons";
+import { set } from "lodash";
 
 const Index = () => {
+  const [activity, setActivity] = useState<Activity | undefined>();
+
   const { data: user } = useUser();
+  const { mutateAsync: deleteActivity } = useDeleteActivity();
 
   const {
-    data: activity = [],
+    data: activities = [],
     isLoading,
     refetch: refetchActivities,
     isFetched,
@@ -38,60 +47,104 @@ const Index = () => {
           </Flex>
         </Box>
 
-        <Box mx="auto" maxW="xl" px={2}>
-          <Box py={3}>
-            <AddActivityModal onSuccess={refetchActivities} />
-          </Box>
-          {isLoading || !isFetched ? (
-            <Flex
-              gap={2}
-              direction="column"
-              mt={4}
-              borderWidth="1px"
-              rounded="md"
-              borderColor="gray.100"
-              p={5}
-            >
-              <Skeleton h="20px" w="75%" />
-              <Flex gap={2}>
-                <Skeleton h="20px" w="50%" />
-                <Skeleton h="20px" w="10%" />
-              </Flex>
-            </Flex>
-          ) : !activity.length ? (
-            <Center
-              borderWidth="1px"
-              rounded="md"
-              borderColor="gray.100"
-              p={5}
-              my={2}
-            >
-              <Text>No activities found.</Text>
-            </Center>
-          ) : (
-            <Flex direction="column" gap={2}>
-              {activity.map((activity) => (
-                <Flex
-                  key={activity.id}
+        <ActivityForm
+          activity={activity}
+          onSuccess={async () => await refetchActivities()}
+        >
+          {({ onOpen: onEdit }) => (
+            <Flex mx="auto" maxW="xl" px={2} direction="column">
+              <Box py={3}>
+                <Flex justify="flex-end">
+                  <Button
+                    onClick={() => {
+                      setActivity(undefined);
+                      onEdit();
+                    }}
+                    leftIcon={<AddIcon />}
+                    bg="blue.500"
+                    color="white"
+                    _hover={{ bg: "blue.600" }}
+                  >
+                    Activity
+                  </Button>
+                </Flex>
+              </Box>
+              {isLoading || !isFetched ? (
+                <Flex direction="column" gap={2}>
+                  <Flex
+                    gap={2}
+                    direction="column"
+                    mt={4}
+                    borderWidth="1px"
+                    rounded="md"
+                    borderColor="gray.100"
+                    p={5}
+                  >
+                    <Skeleton h="20px" w="75%" />
+                    <Flex gap={2}>
+                      <Skeleton h="20px" w="50%" />
+                      <Skeleton h="20px" w="10%" />
+                    </Flex>
+                  </Flex>
+                  <Flex
+                    gap={2}
+                    direction="column"
+                    mt={4}
+                    borderWidth="1px"
+                    rounded="md"
+                    borderColor="gray.100"
+                    p={5}
+                  >
+                    <Skeleton h="20px" w="75%" />
+                    <Flex gap={2}>
+                      <Skeleton h="20px" w="50%" />
+                      <Skeleton h="20px" w="10%" />
+                    </Flex>
+                  </Flex>
+                </Flex>
+              ) : !activities.length ? (
+                <Center
                   borderWidth="1px"
                   rounded="md"
                   borderColor="gray.100"
                   p={5}
-                  bg="white"
+                  my={2}
                 >
-                  <Flex direction="column" flex={1}>
-                    <Text fontWeight="bold">{activity.title}</Text>
-                    <Text>{activity.description}</Text>
-                  </Flex>
-                </Flex>
-              ))}
+                  <Text>No activities found.</Text>
+                </Center>
+              ) : (
+                <ConfirmDeleteModal
+                  onDelete={async () => {
+                    await deleteActivity({ where: { id: activity?.id } });
+                    await refetchActivities();
+                  }}
+                >
+                  {({ onOpen: onDelete }) => (
+                    <Flex direction="column" gap={2}>
+                      {activities.map((activity) => (
+                        <ActivityItem
+                          activity={activity}
+                          key={activity.id}
+                          onDelete={() => {
+                            setActivity(activity);
+                            onDelete();
+                          }}
+                          onEdit={(activity) => {
+                            setActivity(activity);
+                            onEdit();
+                          }}
+                        />
+                      ))}
+                    </Flex>
+                  )}
+                </ConfirmDeleteModal>
+              )}
+              <Text align="center" fontSize="sm" color="gray.700" pb={3} mt={5}>
+                Copyright © {new Date().getFullYear()} by Brock Software LLC
+              </Text>
             </Flex>
           )}
-        </Box>
-
-        <Text align="center" fontSize="sm" color="gray.700" pb={3} mt={5}>
-          Copyright © {new Date().getFullYear()} by Brock Software LLC
-        </Text>
+        </ActivityForm>
       </Box>
     </>
   );

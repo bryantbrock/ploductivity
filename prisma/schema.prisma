@@ -25,7 +25,7 @@ model Activity {
   createdAt     DateTime              @default(now())
   deletedAt     DateTime?
   title         String
-  description   String
+  description   String?              @db.Text
   categoryId    Int?
   category      Cateogry?            @relation(fields: [categoryId], references: [id])
   plodderId     Int
