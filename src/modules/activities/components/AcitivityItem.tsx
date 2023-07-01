@@ -1,8 +1,6 @@
-import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { Flex, IconButton, Text } from "@chakra-ui/react";
 import { Activity } from "@prisma/client";
-import { useDeleteActivity, useUpdateActivity } from "prisma-hooks";
 
 type Props = {
   activity: Activity;

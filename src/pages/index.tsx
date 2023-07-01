@@ -1,21 +1,36 @@
 import { Box, Button, Center, Flex, Skeleton, Text } from "@chakra-ui/react";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { useDeleteActivity, useFindManyActivitys } from "prisma-hooks";
+import {
+  useDeleteActivity,
+  useFindManyActivitys,
+  useFindManyCategorys,
+  useUpsertActivity,
+  useUpsertCategory,
+} from "prisma-hooks";
 import { useUser } from "@/hooks/useUser";
 import { ActivityItem } from "@/modules/activities/components/AcitivityItem";
 import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
-import { useState } from "react";
-import { Activity } from "@prisma/client";
-import { ActivityForm } from "@/modules/activities/components/ActivityForm";
 import { AddIcon } from "@chakra-ui/icons";
-import { set } from "lodash";
+import { FormTextarea } from "@/components/form/FormTextArea";
+import { FormInput } from "@/components/form/FormInput";
+import { DrawerForm } from "@/components/form/DrawerForm";
+import { Activity, Category } from "@prisma/client";
+import { FormMultiSelect } from "@/components/form/FormMultiSelect";
+import { ModalForm } from "@/components/form/ModalForm";
 
 const Index = () => {
-  const [activity, setActivity] = useState<Activity | undefined>();
-
   const { data: user } = useUser();
+  const { data: allCategories = [], refetch: refetchCategories } =
+    useFindManyCategorys({
+      query: { where: { plodderId: user?.id } },
+    });
+
   const { mutateAsync: deleteActivity } = useDeleteActivity();
+  const { isLoading: isUpserting, mutateAsync: upsertActivity } =
+    useUpsertActivity();
+  const { isLoading: isUpsertingCategory, mutateAsync: upsertCategory } =
+    useUpsertCategory();
 
   const {
     data: activities = [],
@@ -23,7 +38,7 @@ const Index = () => {
     refetch: refetchActivities,
     isFetched,
   } = useFindManyActivitys({
-    query: { where: { plodderId: user?.id } },
+    query: { where: { plodderId: user?.id }, include: { categories: true } },
     options: { enabled: !!user?.id },
   });
 
@@ -47,19 +62,69 @@ const Index = () => {
           </Flex>
         </Box>
 
-        <ActivityForm
-          activity={activity}
-          onSuccess={async () => await refetchActivities()}
+        <DrawerForm<Partial<Activity & { categories: Category[] }>>
+          entity="activity"
+          isLoading={isUpserting}
+          defaultValues={{ title: "", description: "", categories: [] }}
+          onSubmit={async (activity) => {
+            if (!activity?.title) throw new Error("Title is required");
+            if (!user?.id) throw new Error("User not found");
+
+            const values = {
+              title: activity?.title,
+              description: activity?.description,
+              plodder: { connect: { id: user.id } },
+            };
+
+            await upsertActivity({
+              create: {
+                ...values,
+                categories: {
+                  connect: activity?.categories?.map(({ id }) => ({ id })),
+                },
+              },
+              update: {
+                ...values,
+                categories: {
+                  set: activity?.categories?.map(({ id }) => ({ id })),
+                },
+              },
+              where: { id: activity?.id ?? 0 },
+            });
+
+            await refetchActivities();
+          }}
+          body={({ control }) => (
+            <>
+              <FormInput
+                control={control}
+                name="title"
+                label="Title"
+                variant="floating"
+                isRequired
+              />
+              <FormTextarea
+                control={control}
+                name="description"
+                label="Description"
+                variant="floating"
+              />
+              <FormMultiSelect
+                control={control}
+                name="categories"
+                options={allCategories}
+                onAdd={() => {}}
+                displayKey="name"
+              />
+            </>
+          )}
         >
           {({ onOpen: onEdit }) => (
             <Flex mx="auto" maxW="xl" px={2} direction="column">
               <Box py={3}>
                 <Flex justify="flex-end">
                   <Button
-                    onClick={() => {
-                      setActivity(undefined);
-                      onEdit();
-                    }}
+                    onClick={() => onEdit()}
                     leftIcon={<AddIcon />}
                     bg="blue.500"
                     color="white"
@@ -114,7 +179,7 @@ const Index = () => {
                 </Center>
               ) : (
                 <ConfirmDeleteModal
-                  onDelete={async () => {
+                  onDelete={async (activity) => {
                     await deleteActivity({ where: { id: activity?.id } });
                     await refetchActivities();
                   }}
@@ -125,14 +190,8 @@ const Index = () => {
                         <ActivityItem
                           activity={activity}
                           key={activity.id}
-                          onDelete={() => {
-                            setActivity(activity);
-                            onDelete();
-                          }}
-                          onEdit={(activity) => {
-                            setActivity(activity);
-                            onEdit();
-                          }}
+                          onDelete={(activity) => onDelete(activity)}
+                          onEdit={onEdit}
                         />
                       ))}
                     </Flex>
@@ -144,7 +203,7 @@ const Index = () => {
               </Text>
             </Flex>
           )}
-        </ActivityForm>
+        </DrawerForm>
       </Box>
     </>
   );

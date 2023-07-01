@@ -1,4 +1,4 @@
-import { extendTheme } from "@chakra-ui/react";
+import { defineStyleConfig, extendTheme } from "@chakra-ui/react";
 import { modalTheme } from "./modal";
 
 export const theme = extendTheme({
@@ -131,6 +131,16 @@ export const theme = extendTheme({
     Textarea: {
       defaultProps: { focusBorderColor: "#4CA6CB" },
     },
+    Tag: defineStyleConfig({
+      variants: {
+        outline: {
+          container: {
+            borderColor: "currentColor",
+            borderWidth: "1px",
+          },
+        },
+      },
+    }),
     Modal: modalTheme,
   },
 });

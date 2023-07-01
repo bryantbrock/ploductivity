@@ -12,31 +12,37 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
-type Props = {
+type Props<T> = {
   additionalText?: string;
-  children: ({ onOpen }: { onOpen: () => void }) => ReactNode;
-  onDelete: () => Promise<void> | void | any;
+  children: ({ onOpen }: { onOpen: (values?: T) => void }) => ReactNode;
+  onDelete: (values?: T) => Promise<void> | void | any;
 };
 
-export const ConfirmDeleteModal = ({
+export const ConfirmDeleteModal = <T extends { id: number }>({
   children,
   onDelete,
   additionalText,
-}: Props) => {
+}: Props<T>) => {
+  const [values, setValues] = useState<T | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const onInternalDelete = useCallback(async () => {
     setIsLoading(true);
-    await onDelete();
+    await onDelete(values);
     setIsLoading(false);
 
     onClose();
-  }, [onClose, onDelete]);
+  }, [onClose, onDelete, values]);
 
   return (
     <>
-      {children({ onOpen })}
+      {children({
+        onOpen: (values?: T) => {
+          setValues(values);
+          onOpen();
+        },
+      })}
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>

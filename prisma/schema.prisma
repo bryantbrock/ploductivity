@@ -17,6 +17,7 @@ model Plodder {
   createdAt DateTime  @default(now())
   deletedAt DateTime?
   clerkId   String    @unique
+  categories Category[]
   activity  Activity[]
 }
 
@@ -26,24 +27,26 @@ model Activity {
   deletedAt     DateTime?
   title         String
   description   String?              @db.Text
-  categoryId    Int?
-  category      Cateogry?            @relation(fields: [categoryId], references: [id])
+  categories      Category[]
   plodderId     Int
   plodder       Plodder               @relation(fields: [plodderId], references: [id])
   blockers      ActivityToActivity[]  @relation("Blockers")
   dependencies  ActivityToActivity[]  @relation("Dependents")
   steps         Step[]
 
-  @@index([categoryId])
   @@index([plodderId])
 }
 
-model Cateogry {
+model Category {
   id        Int       @id @default(autoincrement())
   createdAt DateTime  @default(now())
   deletedAt DateTime?
   name      String
+  plodderId Int
+  plodder   Plodder   @relation(fields: [plodderId], references: [id])
   activities Activity[]
+
+  @@index([plodderId])
 }
 
 model ActivityToActivity {
