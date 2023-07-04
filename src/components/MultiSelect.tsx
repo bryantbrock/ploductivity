@@ -120,7 +120,7 @@ export const MultiSelect = <
         wrap="wrap"
         borderWidth="1px"
         borderColor={isOpen ? "blue.500" : "gray.200"}
-        shadow={isOpen ? "0px 0px 0px 1px #5f59d9" : undefined}
+        shadow={isOpen ? "0px 0px 0px 1px #4CA6CB" : undefined}
         rounded="md"
         p={size === "sm" ? 1 : size === "lg" ? 3 : 2}
         w="full"
@@ -131,8 +131,7 @@ export const MultiSelect = <
         {values.map((val) => (
           <Tag
             key={val.id}
-            size={multiple ? "sm" : "md"}
-            variant={multiple ? "outline" : "unstyled"}
+            size="sm"
             colorScheme="blue"
             borderRadius="md"
             {...(!multiple
@@ -180,6 +179,7 @@ export const MultiSelect = <
               key={option.id}
               cursor="pointer"
               _hover={{ bg: "gray.50" }}
+              p={1}
               onClick={() =>
                 option.id === 0 ? onAdd?.() : handleSelect(option)
               }

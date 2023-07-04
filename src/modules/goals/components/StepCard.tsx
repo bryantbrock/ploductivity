@@ -1,23 +1,28 @@
 import { FormInput } from "@/components/form/FormInput";
+import { FormMultiSelect } from "@/components/form/FormMultiSelect";
 import { FormTextarea } from "@/components/form/FormTextArea";
 import { DeleteIcon, DragHandleIcon } from "@chakra-ui/icons";
 import { Box, Flex, IconButton, Text, useDisclosure } from "@chakra-ui/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Category, Goal, Step } from "@prisma/client";
-import { ForwardedRef, forwardRef } from "react";
-import { Control } from "react-hook-form";
+import { ForwardedRef, forwardRef, useMemo } from "react";
+import { Control, UseFormWatch } from "react-hook-form";
+
+type FormValues = Goal & { steps: (Step & { categories: Category[] })[] };
 
 type Props = {
-  control: Control<Goal & { steps: (Step & { categories: Category[] })[] }>;
+  control: Control<FormValues>;
+  watch: UseFormWatch<FormValues>;
   remove: (i: number) => void;
   index: number;
   step: Step;
+  categories: Category[];
 };
 
 export const StepCard = forwardRef(
   (
-    { control, index, step, remove }: Props,
+    { control, index, step, remove, watch, categories }: Props,
     ref: ForwardedRef<HTMLInputElement>
   ) => {
     const { isOpen, onClose, onOpen } = useDisclosure();
@@ -36,6 +41,13 @@ export const StepCard = forwardRef(
       transition,
     };
 
+    const selectedCategoryIds = watch(`steps.${index}.categories`).map(
+      (c) => c.id
+    );
+    const categoriesMinusSelected = useMemo(() => {
+      return categories.filter((c) => !selectedCategoryIds.includes(c.id));
+    }, [categories, selectedCategoryIds]);
+
     return (
       <Flex
         gap={1}
@@ -47,7 +59,6 @@ export const StepCard = forwardRef(
         justify="space-between"
         ref={setNodeRef}
         style={style}
-        zIndex={2}
         onMouseEnter={onOpen}
         onMouseLeave={isDragging ? undefined : onClose}
       >
@@ -96,6 +107,18 @@ export const StepCard = forwardRef(
             px={2}
             py={1}
             autoGrow
+          />
+          <FormMultiSelect
+            name={`steps.${index}.categories`}
+            control={control}
+            options={categoriesMinusSelected}
+            displayKey="name"
+            hideLabel
+            placeholder="Categories"
+            size="sm"
+            hideClear
+            borderColor="transparent"
+            _hover={{ borderColor: "gray.200" }}
           />
         </Flex>
         <Flex

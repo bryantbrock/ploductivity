@@ -39,7 +39,7 @@ const Index = () => {
           where: { finishedAt: null },
         },
       },
-      where: { userId: user?.id },
+      where: { userId: user?.id ?? 0 },
     },
   });
 

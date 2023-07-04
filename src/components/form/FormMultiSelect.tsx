@@ -33,6 +33,7 @@ type Props<
   stayOpen?: boolean;
   onAdd?: () => void;
   menuDisplayFn?: (option: T, isLast: boolean) => ReactNode;
+  hideClear?: boolean;
 } & Omit<InputProps, "onChange" | "onBlur">;
 
 export const FormMultiSelect = <
@@ -50,6 +51,7 @@ export const FormMultiSelect = <
   multiple = true,
   stayOpen = false,
   hideLabel,
+  hideClear,
   ...props
 }: Props<FV, DK, T>) => {
   const defaultText = useMemo(() => startCase(name.replace("Id", "")), [name]);
@@ -78,7 +80,7 @@ export const FormMultiSelect = <
         {hideLabel ? null : (
           <FormLabel htmlFor={name}>{label ?? defaultText}</FormLabel>
         )}
-        {multiple && value.length ? (
+        {!hideClear && multiple && value.length ? (
           <Button size="xs" variant="outline" onClick={handleClear}>
             Clear
           </Button>

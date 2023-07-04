@@ -46,7 +46,7 @@ const Index = () => {
       },
       where: {
         ...filters,
-        userId: user?.id,
+        userId: user?.id ?? 0,
       },
     },
   });

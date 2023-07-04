@@ -49,6 +49,9 @@ export const Layout = ({ children }: Props) => {
                 <MenuItem as={Link} href="/goals">
                   Goals
                 </MenuItem>
+                <MenuItem as={Link} href="/categories">
+                  Categories
+                </MenuItem>
               </MenuList>
             </Menu>
             <Box minW="35px">

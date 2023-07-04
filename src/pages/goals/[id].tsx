@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import {
   useDeleteManySteps,
+  useFindManyCategorys,
   useFindManyGoals,
   useUpdateGoal,
   useUpsertStep,
@@ -41,7 +42,7 @@ import { hasDirtyField } from "@/utils/hasDirtyField";
 import omit from "lodash/omit";
 import { pullAll } from "lodash";
 
-const Index = () => {
+const GoalId = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { data: user } = useUser();
   const { id: queryId } = useRouter().query;
@@ -63,11 +64,17 @@ const Index = () => {
           where: { finishedAt: null },
         },
       },
-      where: { id, userId: user?.id },
+      where: { id, userId: user?.id ?? 0 },
     },
   });
 
+  const { data: categories = [] } = useFindManyCategorys({
+    options: { enabled: !!user?.id && !Number.isNaN(id) },
+    query: { where: { userId: user?.id } },
+  });
+
   const {
+    watch,
     reset,
     control,
     handleSubmit,
@@ -123,6 +130,11 @@ const Index = () => {
             hasDirtyField(dirtyFields.steps?.[index])
               ? upsertStep({
                   create: {
+                    categories: {
+                      connect: step.categories.map((c) => ({
+                        id: c.id,
+                      })),
+                    },
                     description: step.description,
                     duration: step.duration,
                     goal: { connect: { id } },
@@ -130,6 +142,11 @@ const Index = () => {
                     title: step.title,
                   },
                   update: {
+                    categories: {
+                      set: step.categories.map((c) => ({
+                        id: c.id,
+                      })),
+                    },
                     description: step.description,
                     duration: step.duration,
                     position: index,
@@ -292,6 +309,8 @@ const Index = () => {
                     control={control}
                     remove={remove}
                     ref={index + 1 === steps.length ? lastTitleRef : null}
+                    categories={categories}
+                    watch={watch}
                   />
                 ))}
               </SortableContext>
@@ -326,4 +345,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default GoalId;
