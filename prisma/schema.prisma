@@ -7,34 +7,33 @@ generator client {
 }
 
 datasource db {
-  provider      = "mysql"
-  url           = env("DATABASE_URL")
-  relationMode  = "prisma"
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
-model Plodder {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
-  deletedAt DateTime?
-  clerkId   String    @unique
+model User {
+  id         Int        @id @default(autoincrement())
+  createdAt  DateTime   @default(now())
+  deletedAt  DateTime?
+  clerkId    String     @unique
   categories Category[]
-  activity  Activity[]
+  goals      Goal[]
 }
 
-model Activity {
-  id            Int                   @id @default(autoincrement())
-  createdAt     DateTime              @default(now())
-  deletedAt     DateTime?
-  title         String
-  description   String?              @db.Text
-  categories      Category[]
-  plodderId     Int
-  plodder       Plodder               @relation(fields: [plodderId], references: [id])
-  blockers      ActivityToActivity[]  @relation("Blockers")
-  dependencies  ActivityToActivity[]  @relation("Dependents")
-  steps         Step[]
+model Goal {
+  id           Int          @id @default(autoincrement())
+  createdAt    DateTime     @default(now())
+  deletedAt    DateTime?
+  title        String
+  description  String?      @db.Text
+  userId       Int
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  blockers     GoalToGoal[] @relation("Blockers")
+  dependencies GoalToGoal[] @relation("Dependents")
+  steps        Step[]
 
-  @@index([plodderId])
+  @@index([userId])
 }
 
 model Category {
@@ -42,37 +41,39 @@ model Category {
   createdAt DateTime  @default(now())
   deletedAt DateTime?
   name      String
-  plodderId Int
-  plodder   Plodder   @relation(fields: [plodderId], references: [id])
-  activities Activity[]
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  steps     Step[]
 
-  @@index([plodderId])
+  @@index([userId])
 }
 
-model ActivityToActivity {
-  id            Int         @id @default(autoincrement())
-  createdAt     DateTime    @default(now())
-  deletedAt     DateTime?
-  blockerId     Int
-  blocker       Activity    @relation("Blockers", fields: [blockerId], references: [id])
-  dependentId   Int
-  dependent     Activity    @relation("Dependents", fields: [dependentId], references: [id])
+model GoalToGoal {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+  blockerId   Int
+  blocker     Goal      @relation("Blockers", fields: [blockerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  dependentId Int
+  dependent   Goal      @relation("Dependents", fields: [dependentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([blockerId])
   @@index([dependentId])
 }
 
 model Step {
-  id          Int       @id @default(autoincrement())
-  createdAt   DateTime  @default(now())
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now())
   deletedAt   DateTime?
+  finishedAt  DateTime?
   snoozedTill DateTime?
   title       String
-  description Float
-  position    Int
+  description String?
+  position    Int?
   duration    Int?
-  activityId  Int
-  activity    Activity @relation(fields: [activityId], references: [id])
+  goalId      Int
+  goal        Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  categories  Category[]
 
-  @@index([activityId])
+  @@index([goalId])
 }

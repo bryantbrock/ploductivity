@@ -30,7 +30,9 @@ type Props<
   multiple?: boolean;
   displayFn?: (value: T) => ReactNode;
   hideLabel?: boolean;
+  stayOpen?: boolean;
   onAdd?: () => void;
+  menuDisplayFn?: (option: T, isLast: boolean) => ReactNode;
 } & Omit<InputProps, "onChange" | "onBlur">;
 
 export const FormMultiSelect = <
@@ -46,6 +48,7 @@ export const FormMultiSelect = <
   displayFn,
   isRequired,
   multiple = true,
+  stayOpen = false,
   hideLabel,
   ...props
 }: Props<FV, DK, T>) => {

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Control, FieldValues, Path, useController } from "react-hook-form";
 import {
   FormControl,
@@ -18,6 +18,7 @@ type Props<T extends FieldValues> = {
   helperText?: string;
   variant?: "floating" | "outline" | "unstyled" | "flushed" | "filled";
   hideLabel?: boolean;
+  autoGrow?: boolean;
 } & Omit<TextareaProps, "variant">;
 
 export const FormTextarea = <T extends FieldValues>({
@@ -29,14 +30,24 @@ export const FormTextarea = <T extends FieldValues>({
   helperText,
   variant,
   hideLabel,
+  autoGrow,
   ...props
 }: Props<T>) => {
   const defaultText = useMemo(() => startCase(name), [name]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
     field,
     fieldState: { error, invalid },
   } = useController({ control, name, rules: { required: isRequired } });
+
+  useEffect(() => {
+    if (autoGrow && textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height =
+        textareaRef.current.scrollHeight + "px";
+    }
+  }, [autoGrow, field.value]);
 
   if (variant === "floating") {
     return (
@@ -51,6 +62,7 @@ export const FormTextarea = <T extends FieldValues>({
           id={name}
           {...field}
           {...props}
+          ref={textareaRef}
           placeholder={placeholder ?? " "}
         />
         {!hideLabel ? <FormLabel>{label ?? defaultText}</FormLabel> : null}
@@ -73,6 +85,7 @@ export const FormTextarea = <T extends FieldValues>({
         id={name}
         {...field}
         {...props}
+        ref={textareaRef}
         placeholder={placeholder ?? defaultText}
       />
       {error ? <FormErrorMessage>{error.message}</FormErrorMessage> : null}

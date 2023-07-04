@@ -17,7 +17,6 @@ import {
   useDisclosure,
   Text,
   FlexProps,
-  Button,
 } from "@chakra-ui/react";
 import { useDebounce, useOnClickOutside } from "usehooks-ts";
 import differenceWith from "lodash/differenceWith";
@@ -32,6 +31,8 @@ export type MultiSelectProps<T, DK extends keyof T> = {
   shouldFocus?: boolean;
   onChange?: (values: T[]) => void;
   displayFn?: (value: T) => ReactNode;
+  menuDisplayFn?: (option: T, isLast: boolean) => ReactNode;
+  stayOpen?: boolean;
 } & Omit<FlexProps, "onChange"> &
   Pick<InputProps, "size" | "variant" | "placeholder" | "name">;
 
@@ -49,6 +50,8 @@ export const MultiSelect = <
   placeholder,
   shouldFocus = false,
   multiple = true,
+  menuDisplayFn,
+  stayOpen = false,
   onAdd,
   ...props
 }: MultiSelectProps<T, DK>) => {
@@ -58,7 +61,7 @@ export const MultiSelect = <
   const searchRef = useRef<HTMLInputElement>(null);
   const debouncedSearch = useDebounce(search, 300);
 
-  useOnClickOutside(ref, onClose);
+  useOnClickOutside(ref, stayOpen ? () => {} : onClose);
 
   const filteredOptions = useMemo(
     () =>
@@ -73,8 +76,8 @@ export const MultiSelect = <
           onAdd
             ? [
                 {
-                  id: 0,
                   [displayKey]: <Text>+ Add</Text>,
+                  id: 0,
                 } as T,
               ]
             : []
@@ -172,18 +175,21 @@ export const MultiSelect = <
           overflowY="auto"
           borderWidth="1px"
         >
-          {filteredOptions.map((option) => (
+          {filteredOptions.map((option, index) => (
             <Flex
               key={option.id}
               cursor="pointer"
-              p={2}
-              _hover={{ bg: "gray.100" }}
+              _hover={{ bg: "gray.50" }}
               onClick={() =>
                 option.id === 0 ? onAdd?.() : handleSelect(option)
               }
             >
-              <Text fontSize="sm">
-                {displayFn ? displayFn(option) : get(option, displayKey, "")}
+              <Text fontSize="sm" w="full">
+                {menuDisplayFn
+                  ? menuDisplayFn(option, index === filteredOptions.length - 1)
+                  : displayFn
+                  ? displayFn(option)
+                  : get(option, displayKey, "")}
               </Text>
             </Flex>
           ))}

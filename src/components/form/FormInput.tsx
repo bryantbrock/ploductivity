@@ -1,4 +1,10 @@
-import { ChangeEvent, useCallback, useMemo } from "react";
+import {
+  ChangeEvent,
+  useCallback,
+  useMemo,
+  forwardRef,
+  ForwardedRef,
+} from "react";
 import { Control, FieldValues, Path, useController } from "react-hook-form";
 import {
   FormControl,
@@ -30,20 +36,23 @@ type Props<T extends FieldValues> = {
   hideLabel?: boolean;
 } & Omit<InputProps, "variant">;
 
-export const FormInput = <T extends FieldValues>({
-  control,
-  name,
-  label,
-  isRequired,
-  placeholder,
-  type,
-  icon,
-  tooltipLabel,
-  variant,
-  helperText,
-  hideLabel,
-  ...props
-}: Props<T>) => {
+const FormInputInner = <T extends FieldValues>(
+  {
+    control,
+    name,
+    label,
+    isRequired,
+    placeholder,
+    type,
+    icon,
+    tooltipLabel,
+    variant,
+    helperText,
+    hideLabel,
+    ...props
+  }: Props<T>,
+  ref: ForwardedRef<HTMLInputElement>
+) => {
   const defaultText = useMemo(() => startCase(name), [name]);
 
   const {
@@ -96,6 +105,7 @@ export const FormInput = <T extends FieldValues>({
             type={type}
             onChange={onFieldChange}
             placeholder={placeholder ?? " "}
+            ref={ref}
           />
         )}
         {!hideLabel ? <FormLabel>{label ?? defaultText}</FormLabel> : null}
@@ -164,9 +174,14 @@ export const FormInput = <T extends FieldValues>({
           type={type}
           onChange={onFieldChange}
           placeholder={placeholder}
+          ref={ref}
         />
       )}
       {error ? <FormErrorMessage>{error.message}</FormErrorMessage> : null}
     </FormControl>
   );
 };
+
+export const FormInput = forwardRef(FormInputInner) as <T extends FieldValues>(
+  props: Props<T> & { ref?: ForwardedRef<HTMLInputElement> }
+) => JSX.Element;

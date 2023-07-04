@@ -11,14 +11,7 @@ import {
   usePrevious,
 } from "@chakra-ui/react";
 import startCase from "lodash/startCase";
-import {
-  LegacyRef,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Control, SubmitHandler, useForm } from "react-hook-form";
 
 type Props<T extends object> = {

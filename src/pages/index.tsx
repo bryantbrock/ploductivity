@@ -1,211 +1,140 @@
-import { Box, Button, Center, Flex, Skeleton, Text } from "@chakra-ui/react";
-import { UserButton } from "@clerk/nextjs";
-import Link from "next/link";
-import {
-  useDeleteActivity,
-  useFindManyActivitys,
-  useFindManyCategorys,
-  useUpsertActivity,
-  useUpsertCategory,
-} from "prisma-hooks";
+import { Center, Flex, IconButton, Skeleton, Text } from "@chakra-ui/react";
+import { useFindManyGoals } from "prisma-hooks";
 import { useUser } from "@/hooks/useUser";
-import { ActivityItem } from "@/modules/activities/components/AcitivityItem";
-import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
-import { AddIcon } from "@chakra-ui/icons";
-import { FormTextarea } from "@/components/form/FormTextArea";
-import { FormInput } from "@/components/form/FormInput";
-import { DrawerForm } from "@/components/form/DrawerForm";
-import { Activity, Category } from "@prisma/client";
-import { FormMultiSelect } from "@/components/form/FormMultiSelect";
-import { ModalForm } from "@/components/form/ModalForm";
+import { FunnelIcon } from "@/icons/FunnelIcon";
+import { useMemo, useState } from "react";
+import { Prisma, Step } from "@prisma/client";
+import { StepCard } from "@/modules/index/components/StepCard";
+import { Layout } from "@/components/Layout";
 
 const Index = () => {
   const { data: user } = useUser();
-  const { data: allCategories = [], refetch: refetchCategories } =
-    useFindManyCategorys({
-      query: { where: { plodderId: user?.id } },
-    });
-
-  const { mutateAsync: deleteActivity } = useDeleteActivity();
-  const { isLoading: isUpserting, mutateAsync: upsertActivity } =
-    useUpsertActivity();
-  const { isLoading: isUpsertingCategory, mutateAsync: upsertCategory } =
-    useUpsertCategory();
-
-  const {
-    data: activities = [],
-    isLoading,
-    refetch: refetchActivities,
-    isFetched,
-  } = useFindManyActivitys({
-    query: { where: { plodderId: user?.id }, include: { categories: true } },
-    options: { enabled: !!user?.id },
+  const currentTime = useMemo(() => new Date(), []);
+  const [filters, setFilters] = useState<Prisma.GoalWhereInput>({
+    steps: {
+      some: {
+        OR: [{ snoozedTill: { lte: currentTime } }, { snoozedTill: null }],
+        // categories: { some: { name: { in: ["Computer"] } } },
+        finishedAt: null,
+      },
+    },
   });
 
+  // TODO: filter by minutes
+  // TODO: filter by categories
+  // TODO: filter by snoozedTill (show snoozed or not)
+
+  // Note: the app sorts steps based on two pieces of information
+  // 1. If the step does not have a previous step push it to the top
+  // 2. If the step has a previous step (ie a position before it),
+  //    sort the current steps by the `finishedAt` date of the previous step (most recent last)
+
+  const {
+    data: goals = [],
+    isLoading,
+    isFetched,
+  } = useFindManyGoals({
+    options: { enabled: !!user?.id },
+    query: {
+      include: {
+        _count: { select: { steps: true } },
+        steps: {
+          include: { categories: true, goal: true },
+          orderBy: { position: "asc" },
+          where: { finishedAt: null },
+        },
+      },
+      where: {
+        ...filters,
+        userId: user?.id,
+      },
+    },
+  });
+
+  const sortedGoals = useMemo(() => {
+    const getMostRecentFinishedStep = (steps: Step[]) => {
+      return steps.reduce((latest, current) => {
+        if (!current.finishedAt) return latest;
+        if (!latest) return current.finishedAt;
+
+        return new Date(current.finishedAt) > new Date(latest)
+          ? current.finishedAt
+          : latest;
+      }, null as unknown as Date);
+    };
+
+    return goals.sort((a, b) => {
+      const aFinishedAt = getMostRecentFinishedStep(a.steps);
+      const bFinishedAt = getMostRecentFinishedStep(b.steps);
+
+      if (!aFinishedAt) return -1;
+      if (!bFinishedAt) return 1;
+
+      return new Date(bFinishedAt).getTime() - new Date(aFinishedAt).getTime();
+    });
+  }, [goals]);
+
   return (
-    <>
-      <Box bg="gray.50" minH="100vh">
-        <Box borderBottomWidth="1px" bg="white" borderBottomColor="gray.100">
+    <Layout>
+      <Flex justify="flex-end" py={3} gap={2}>
+        <IconButton
+          variant="outline"
+          aria-label="filters"
+          bgColor="white"
+          icon={<FunnelIcon />}
+        />
+      </Flex>
+      {isLoading || !isFetched ? (
+        <Flex direction="column" gap={2}>
           <Flex
-            justify="space-between"
-            py={3}
-            px={2}
-            mx="auto"
-            maxW="xl"
-            minH="60px"
-            align="center"
+            gap={2}
+            direction="column"
+            mt={4}
+            borderWidth="1px"
+            rounded="md"
+            borderColor="gray.100"
+            p={5}
           >
-            <Text fontSize="xl" fontWeight="bold" as={Link} href="/">
-              Ploductivity
-            </Text>
-            <UserButton afterSignOutUrl="/" />
-          </Flex>
-        </Box>
-
-        <DrawerForm<Partial<Activity & { categories: Category[] }>>
-          entity="activity"
-          isLoading={isUpserting}
-          defaultValues={{ title: "", description: "", categories: [] }}
-          onSubmit={async (activity) => {
-            if (!activity?.title) throw new Error("Title is required");
-            if (!user?.id) throw new Error("User not found");
-
-            const values = {
-              title: activity?.title,
-              description: activity?.description,
-              plodder: { connect: { id: user.id } },
-            };
-
-            await upsertActivity({
-              create: {
-                ...values,
-                categories: {
-                  connect: activity?.categories?.map(({ id }) => ({ id })),
-                },
-              },
-              update: {
-                ...values,
-                categories: {
-                  set: activity?.categories?.map(({ id }) => ({ id })),
-                },
-              },
-              where: { id: activity?.id ?? 0 },
-            });
-
-            await refetchActivities();
-          }}
-          body={({ control }) => (
-            <>
-              <FormInput
-                control={control}
-                name="title"
-                label="Title"
-                variant="floating"
-                isRequired
-              />
-              <FormTextarea
-                control={control}
-                name="description"
-                label="Description"
-                variant="floating"
-              />
-              <FormMultiSelect
-                control={control}
-                name="categories"
-                options={allCategories}
-                onAdd={() => {}}
-                displayKey="name"
-              />
-            </>
-          )}
-        >
-          {({ onOpen: onEdit }) => (
-            <Flex mx="auto" maxW="xl" px={2} direction="column">
-              <Box py={3}>
-                <Flex justify="flex-end">
-                  <Button
-                    onClick={() => onEdit()}
-                    leftIcon={<AddIcon />}
-                    bg="blue.500"
-                    color="white"
-                    _hover={{ bg: "blue.600" }}
-                  >
-                    Activity
-                  </Button>
-                </Flex>
-              </Box>
-              {isLoading || !isFetched ? (
-                <Flex direction="column" gap={2}>
-                  <Flex
-                    gap={2}
-                    direction="column"
-                    mt={4}
-                    borderWidth="1px"
-                    rounded="md"
-                    borderColor="gray.100"
-                    p={5}
-                  >
-                    <Skeleton h="20px" w="75%" />
-                    <Flex gap={2}>
-                      <Skeleton h="20px" w="50%" />
-                      <Skeleton h="20px" w="10%" />
-                    </Flex>
-                  </Flex>
-                  <Flex
-                    gap={2}
-                    direction="column"
-                    mt={4}
-                    borderWidth="1px"
-                    rounded="md"
-                    borderColor="gray.100"
-                    p={5}
-                  >
-                    <Skeleton h="20px" w="75%" />
-                    <Flex gap={2}>
-                      <Skeleton h="20px" w="50%" />
-                      <Skeleton h="20px" w="10%" />
-                    </Flex>
-                  </Flex>
-                </Flex>
-              ) : !activities.length ? (
-                <Center
-                  borderWidth="1px"
-                  rounded="md"
-                  borderColor="gray.100"
-                  p={5}
-                  my={2}
-                >
-                  <Text>No activities found.</Text>
-                </Center>
-              ) : (
-                <ConfirmDeleteModal
-                  onDelete={async (activity) => {
-                    await deleteActivity({ where: { id: activity?.id } });
-                    await refetchActivities();
-                  }}
-                >
-                  {({ onOpen: onDelete }) => (
-                    <Flex direction="column" gap={2}>
-                      {activities.map((activity) => (
-                        <ActivityItem
-                          activity={activity}
-                          key={activity.id}
-                          onDelete={(activity) => onDelete(activity)}
-                          onEdit={onEdit}
-                        />
-                      ))}
-                    </Flex>
-                  )}
-                </ConfirmDeleteModal>
-              )}
-              <Text align="center" fontSize="sm" color="gray.700" pb={3} mt={5}>
-                Copyright © {new Date().getFullYear()} by Brock Software LLC
-              </Text>
+            <Skeleton h="20px" w="75%" />
+            <Flex gap={2}>
+              <Skeleton h="20px" w="50%" />
+              <Skeleton h="20px" w="10%" />
             </Flex>
-          )}
-        </DrawerForm>
-      </Box>
-    </>
+          </Flex>
+          <Flex
+            gap={2}
+            direction="column"
+            mt={4}
+            borderWidth="1px"
+            rounded="md"
+            borderColor="gray.100"
+            p={5}
+          >
+            <Skeleton h="20px" w="75%" />
+            <Flex gap={2}>
+              <Skeleton h="20px" w="50%" />
+              <Skeleton h="20px" w="10%" />
+            </Flex>
+          </Flex>
+        </Flex>
+      ) : !sortedGoals.length ? (
+        <Center
+          borderWidth="1px"
+          rounded="md"
+          borderColor="gray.100"
+          p={5}
+          my={2}
+        >
+          <Text>No activities found.</Text>
+        </Center>
+      ) : (
+        <Flex direction="column" gap={2} flexGrow={1}>
+          {sortedGoals.map((goal, i) => (
+            <StepCard key={goal.id} goal={goal} index={i} />
+          ))}
+        </Flex>
+      )}
+    </Layout>
   );
 };
 
