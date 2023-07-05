@@ -76,7 +76,7 @@ const Index = () => {
 
   return (
     <Layout>
-      <Flex justify="flex-end" py={3} gap={2}>
+      <Flex py={4} gap={2}>
         <IconButton
           variant="outline"
           aria-label="filters"

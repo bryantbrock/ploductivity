@@ -326,7 +326,7 @@ const GoalId = () => {
               onClick={() => {
                 append(
                   {
-                    categories: steps[steps.length - 1].categories,
+                    categories: steps[steps.length - 1]?.categories ?? [],
                     description: "",
                     duration: 5,
                     id: 0,

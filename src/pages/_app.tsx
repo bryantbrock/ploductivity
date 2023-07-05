@@ -1,5 +1,6 @@
+import { Copyright } from "@/components/Copyright";
 import { theme } from "@/theme";
-import { ChakraProvider, Flex, Box, Text } from "@chakra-ui/react";
+import { ChakraProvider, Flex, Box } from "@chakra-ui/react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AppProps } from "next/app";
 import { useEffect, useState } from "react";
@@ -36,9 +37,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             <Box flexGrow={1}>
               <Component {...pageProps} />
             </Box>
-            <Text align="center" fontSize="sm" color="gray.700" pb={3} mt={5}>
-              Copyright © {new Date().getFullYear()} by Brock Software LLC
-            </Text>
+            <Copyright />
           </Flex>
         </ChakraProvider>
       </ClerkProvider>
