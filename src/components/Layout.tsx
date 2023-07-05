@@ -31,6 +31,7 @@ export const Layout = ({ children }: Props) => {
 
   const { pathname } = useRouter();
   const basePath = pathname.split("/")[1];
+  const isSubRoute = pathname.split("/").length > 2;
 
   return (
     <>
@@ -79,7 +80,14 @@ export const Layout = ({ children }: Props) => {
             </Flex>
           </Box>
         ) : null}
-        <Flex mx="auto" maxW="xl" px={2} direction="column" position="relative">
+        <Flex
+          mx="auto"
+          maxW="xl"
+          px={2}
+          direction="column"
+          position="relative"
+          mb={isBase ? "120px" : undefined}
+        >
           {children}
           {isLarge ? (
             <Stack
@@ -136,9 +144,9 @@ export const Layout = ({ children }: Props) => {
           ) : null}
         </Flex>
 
-        {isBase ? (
+        {isBase && !isSubRoute ? (
           <Flex
-            position="absolute"
+            position="fixed"
             bottom={0}
             w="full"
             bg="white"
@@ -146,9 +154,9 @@ export const Layout = ({ children }: Props) => {
             borderTopColor="gray.100"
             p={2}
             px={6}
-            gap={2}
             justify="space-between"
-            pb={8}
+            pb={7}
+            zIndex={999999}
           >
             <Flex
               as={Link}
@@ -157,7 +165,6 @@ export const Layout = ({ children }: Props) => {
               gap={1}
               px={3}
               py={1}
-              _hover={{ bg: "gray.50" }}
               direction="column"
             >
               <Center h="32px" w="32px">
@@ -182,7 +189,6 @@ export const Layout = ({ children }: Props) => {
               gap={1}
               px={3}
               py={1}
-              _hover={{ bg: "gray.50" }}
               direction="column"
             >
               <Center h="32px" w="32px">
@@ -206,7 +212,6 @@ export const Layout = ({ children }: Props) => {
               gap={1}
               px={3}
               py={1}
-              _hover={{ bg: "gray.50" }}
               direction="column"
               h="full"
             >
@@ -232,7 +237,6 @@ export const Layout = ({ children }: Props) => {
               gap={1}
               px={3}
               py={1}
-              _hover={{ bg: "gray.50" }}
               direction="column"
             >
               <Box minW="35px">

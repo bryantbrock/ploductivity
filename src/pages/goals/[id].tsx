@@ -1,13 +1,4 @@
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  Button,
-  Center,
-  Flex,
-  Skeleton,
-  Text,
-} from "@chakra-ui/react";
+import { Button, Center, Flex, Skeleton, Text } from "@chakra-ui/react";
 import {
   useDeleteManySteps,
   useFindManyCategorys,
@@ -17,8 +8,7 @@ import {
 } from "prisma-hooks";
 import { useUser } from "@/hooks/useUser";
 import { Layout } from "@/components/Layout";
-import Link from "next/link";
-import { AddIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import { AddIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/router";
 import { useForm, useFieldArray } from "react-hook-form";
 import { FormInput } from "@/components/form/FormInput";
@@ -41,6 +31,7 @@ import { useCallback, useRef, useState } from "react";
 import { hasDirtyField } from "@/utils/hasDirtyField";
 import omit from "lodash/omit";
 import { pullAll } from "lodash";
+import { BackButton } from "@/components/BackButton";
 
 const GoalId = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -190,26 +181,7 @@ const GoalId = () => {
     <Layout>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Flex justify="space-between" py={3} gap={2} align="center" minH="63px">
-          <Breadcrumb
-            spacing="8px"
-            separator={<ChevronRightIcon color="gray.500" />}
-            flexGrow={1}
-          >
-            <BreadcrumbItem>
-              <BreadcrumbLink as={Link} href="/goals" fontWeight="semibold">
-                Goals
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                as={Link}
-                href={`/goals/${id}`}
-                fontWeight="semibold"
-              >
-                {id || ""}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </Breadcrumb>
+          <BackButton href="/goals" label={goal?.title} />
           <Flex gap={1}>
             <Button
               variant="outline"
