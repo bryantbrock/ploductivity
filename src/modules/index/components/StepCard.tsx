@@ -18,7 +18,7 @@ import {
 import { Category, Goal, Step } from "@prisma/client";
 import Link from "next/link";
 import { useUpdateStep } from "prisma-hooks";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "react-query";
 
 type Props = {
@@ -32,6 +32,9 @@ type Props = {
 export const StepCard = ({ goal, index }: Props) => {
   const step = goal.steps[0];
   const isFirst = index === 0;
+  const [loading, setLoading] = useState<"snooze" | "finished" | undefined>(
+    undefined
+  );
 
   const queryClient = useQueryClient();
   const { mutateAsync: updateStep, isLoading: isUpdatingStep } =
@@ -47,15 +50,28 @@ export const StepCard = ({ goal, index }: Props) => {
 
   const onSnooze = useCallback(
     async (amount: number, unit: "day" | "hr") => {
+      setLoading("snooze");
       await updateStep({
         data: { snoozedTill: inFuture(amount, unit) },
         where: { id: step.id },
       });
 
       await queryClient.refetchQueries("Goal.findMany");
+      setLoading(undefined);
     },
     [queryClient, step.id, updateStep]
   );
+
+  const onFinish = useCallback(async () => {
+    setLoading("finished");
+    await updateStep({
+      data: { finishedAt: new Date() },
+      where: { id: step.id },
+    });
+
+    await queryClient.refetchQueries("Goal.findMany");
+    setLoading(undefined);
+  }, [queryClient, step.id, updateStep]);
 
   return (
     <Box
@@ -85,12 +101,23 @@ export const StepCard = ({ goal, index }: Props) => {
             >
               {goal.title.toUpperCase()}
             </Text>
-            <Text fontWeight="semibold">{step.title}</Text>
+            <Text
+              fontWeight="semibold"
+              as={Link}
+              _hover={{ textDecor: "underline" }}
+              href={`/goals/${goal.id}#step-${step.id}`}
+            >
+              {step.title}
+            </Text>
             <Flex color="gray.400" gap={1} mt="3px" align="center">
               <ClockIcon />
-              <Text fontSize="xs">{step.duration} min</Text>
-              <Divider orientation="vertical" h="12px" mx={1} />
-              <Flex gap={1}>
+              <Text fontSize="xs" minW="max-content">
+                {step.duration} min
+              </Text>
+              {step.categories.length ? (
+                <Divider orientation="vertical" h="12px" mx={1} />
+              ) : null}
+              <Flex gap={1} wrap="wrap">
                 {step.categories.map((category) => (
                   <Tag key={step.id + category.id} bgColor="gray.100" size="sm">
                     {category.name}
@@ -114,7 +141,8 @@ export const StepCard = ({ goal, index }: Props) => {
                 variant="outline"
                 rounded="full"
                 size="sm"
-                isLoading={isUpdatingStep}
+                isLoading={loading === "snooze"}
+                isDisabled={loading === "finished"}
               />
             </Tooltip>
             <MenuList maxW="100px">
@@ -139,15 +167,9 @@ export const StepCard = ({ goal, index }: Props) => {
               rounded="full"
               size="sm"
               colorScheme="green"
-              isLoading={isUpdatingStep}
-              onClick={async () => {
-                await updateStep({
-                  data: { finishedAt: new Date() },
-                  where: { id: step.id },
-                });
-
-                await queryClient.refetchQueries("Goal.findMany");
-              }}
+              isDisabled={loading === "snooze"}
+              isLoading={loading === "finished"}
+              onClick={onFinish}
             />
           </Tooltip>
         </Flex>

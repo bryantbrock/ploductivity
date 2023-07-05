@@ -61,7 +61,6 @@ const GoalId = () => {
         steps: {
           include: { categories: true },
           orderBy: { position: "asc" },
-          where: { finishedAt: null },
         },
       },
       where: { id, userId: user?.id ?? 0 },
@@ -77,6 +76,7 @@ const GoalId = () => {
     watch,
     reset,
     control,
+    setValue,
     handleSubmit,
     formState: { isDirty, dirtyFields },
   } = useForm({ values: goal });
@@ -86,7 +86,7 @@ const GoalId = () => {
     append,
     remove,
     move,
-  } = useFieldArray({ control, name: "steps" });
+  } = useFieldArray({ control, keyName: "fieldId", name: "steps" });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -137,8 +137,10 @@ const GoalId = () => {
                     },
                     description: step.description,
                     duration: step.duration,
+                    finishedAt: step.finishedAt,
                     goal: { connect: { id } },
                     position: index,
+                    snoozedTill: step.snoozedTill,
                     title: step.title,
                   },
                   update: {
@@ -149,7 +151,9 @@ const GoalId = () => {
                     },
                     description: step.description,
                     duration: step.duration,
+                    finishedAt: step.finishedAt,
                     position: index,
+                    snoozedTill: step.snoozedTill,
                     title: step.title,
                   },
                   where: { id: step.id },
@@ -311,6 +315,7 @@ const GoalId = () => {
                     ref={index + 1 === steps.length ? lastTitleRef : null}
                     categories={categories}
                     watch={watch}
+                    setValue={setValue}
                   />
                 ))}
               </SortableContext>
@@ -321,6 +326,7 @@ const GoalId = () => {
               onClick={() => {
                 append(
                   {
+                    categories: steps[steps.length - 1].categories,
                     description: "",
                     duration: 5,
                     id: 0,

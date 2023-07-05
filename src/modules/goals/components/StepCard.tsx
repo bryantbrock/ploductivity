@@ -1,19 +1,37 @@
 import { FormInput } from "@/components/form/FormInput";
 import { FormMultiSelect } from "@/components/form/FormMultiSelect";
 import { FormTextarea } from "@/components/form/FormTextArea";
-import { DeleteIcon, DragHandleIcon } from "@chakra-ui/icons";
-import { Box, Flex, IconButton, Text, useDisclosure } from "@chakra-ui/react";
+import { inFuture } from "@/utils/inFuture";
+import {
+  BellIcon,
+  CheckIcon,
+  DeleteIcon,
+  DragHandleIcon,
+} from "@chakra-ui/icons";
+import {
+  Box,
+  Flex,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Text,
+  Tooltip,
+} from "@chakra-ui/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Category, Goal, Step } from "@prisma/client";
-import { ForwardedRef, forwardRef, useMemo } from "react";
-import { Control, UseFormWatch } from "react-hook-form";
+import { useRouter } from "next/router";
+import { ForwardedRef, forwardRef, useEffect, useMemo, useState } from "react";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 
 type FormValues = Goal & { steps: (Step & { categories: Category[] })[] };
 
 type Props = {
   control: Control<FormValues>;
   watch: UseFormWatch<FormValues>;
+  setValue: UseFormSetValue<FormValues>;
   remove: (i: number) => void;
   index: number;
   step: Step;
@@ -22,10 +40,18 @@ type Props = {
 
 export const StepCard = forwardRef(
   (
-    { control, index, step, remove, watch, categories }: Props,
+    { control, index, step, remove, watch, categories, setValue }: Props,
     ref: ForwardedRef<HTMLInputElement>
   ) => {
-    const { isOpen, onClose, onOpen } = useDisclosure();
+    const router = useRouter();
+    const stepId = parseInt(
+      router.asPath.split("#").pop()?.split("-").pop() ?? ""
+    );
+    const hasIdHash = !isNaN(stepId) && stepId === step.id;
+    const [hasHash, setHasHash] = useState(hasIdHash);
+
+    const isFinished = !!watch(`steps.${index}.finishedAt`);
+    const isSnoozed = !!watch(`steps.${index}.snoozedTill`);
 
     const {
       attributes,
@@ -48,19 +74,43 @@ export const StepCard = forwardRef(
       return categories.filter((c) => !selectedCategoryIds.includes(c.id));
     }, [categories, selectedCategoryIds]);
 
+    useEffect(() => {
+      if (!hasHash) return;
+
+      const handleScroll = () => {
+        if (window.location.hash) {
+          setHasHash(false);
+          window.history.replaceState(
+            "",
+            document.title,
+            window.location.pathname + window.location.search
+          );
+        }
+      };
+
+      setTimeout(
+        () =>
+          window.addEventListener("scroll", handleScroll, { passive: true }),
+        500
+      );
+
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, [hasHash]);
+
     return (
       <Flex
         gap={1}
         rounded="md"
         bg="white"
         borderWidth="2px"
-        borderColor="gray.100"
+        borderColor={hasHash ? "blue.300" : "gray.100"}
         p={1}
         justify="space-between"
         ref={setNodeRef}
         style={style}
-        onMouseEnter={onOpen}
-        onMouseLeave={isDragging ? undefined : onClose}
+        id={`step-${step.id}`}
       >
         <Flex direction="column" flexGrow={1} gap={1}>
           <Flex gap={1} grow={1}>
@@ -121,29 +171,135 @@ export const StepCard = forwardRef(
             _hover={{ borderColor: "gray.200" }}
           />
         </Flex>
-        <Flex
-          direction="column"
-          gap={1}
-          align="center"
-          mt={1}
-          visibility={isOpen ? "visible" : "hidden"}
-        >
+        <Flex direction="column" gap={1} align="center" mt={1}>
           <IconButton
             aria-label="Delete step"
             icon={<DeleteIcon color="gray.400" />}
             onClick={() => remove(index)}
-            variant="ghost"
-            size="sm"
+            size="xs"
+            variant="outline"
+            rounded="full"
           />
           <DragHandleIcon
             color="gray.400"
             cursor={isDragging ? "grabbing" : "grab"}
-            p={1}
-            h="20px"
-            w="20px"
+            p={1.5}
+            h="24px"
+            w="24px"
+            borderWidth="1px"
+            borderColor="gray.200"
+            rounded="full"
             {...attributes}
             {...listeners}
           />
+          <Tooltip
+            label={isFinished ? "Mark unfinished" : "Mark finished"}
+            hasArrow
+            placement="left"
+          >
+            <IconButton
+              aria-label="Delete step"
+              icon={<CheckIcon color={isFinished ? "green.600" : "gray.500"} />}
+              variant="outline"
+              rounded="full"
+              bgColor={isFinished ? "green.50" : "gray.50"}
+              colorScheme={isFinished ? "green" : "gray"}
+              onClick={() =>
+                setValue(
+                  `steps.${index}.finishedAt`,
+                  isFinished ? null : new Date(),
+                  { shouldDirty: true }
+                )
+              }
+              size="xs"
+            />
+          </Tooltip>
+          {!isSnoozed ? (
+            <Menu>
+              <Tooltip
+                label="Snooze"
+                placement="top"
+                hasArrow
+                rounded="md"
+                openDelay={400}
+              >
+                <MenuButton
+                  as={IconButton}
+                  aria-label="snooze"
+                  icon={<BellIcon color="gray.400" />}
+                  variant="outline"
+                  rounded="full"
+                  size="xs"
+                />
+              </Tooltip>
+              <MenuList maxW="100px">
+                <MenuItem
+                  onClick={() =>
+                    setValue(`steps.${index}.snoozedTill`, inFuture(1, "hr"), {
+                      shouldDirty: true,
+                    })
+                  }
+                >
+                  1 Hour
+                </MenuItem>
+                <MenuItem
+                  onClick={() =>
+                    setValue(`steps.${index}.snoozedTill`, inFuture(12, "hr"), {
+                      shouldDirty: true,
+                    })
+                  }
+                >
+                  12 Hours
+                </MenuItem>
+                <MenuItem
+                  onClick={() =>
+                    setValue(`steps.${index}.snoozedTill`, inFuture(1, "day"), {
+                      shouldDirty: true,
+                    })
+                  }
+                >
+                  1 Day
+                </MenuItem>
+                <MenuItem
+                  onClick={() =>
+                    setValue(`steps.${index}.snoozedTill`, inFuture(5, "day"), {
+                      shouldDirty: true,
+                    })
+                  }
+                >
+                  5 Days
+                </MenuItem>
+                <MenuItem
+                  onClick={() =>
+                    setValue(
+                      `steps.${index}.snoozedTill`,
+                      inFuture(15, "day"),
+                      { shouldDirty: true }
+                    )
+                  }
+                >
+                  15 Days
+                </MenuItem>
+              </MenuList>
+            </Menu>
+          ) : (
+            <Tooltip label="Remove snooze" hasArrow placement="left">
+              <IconButton
+                aria-label="Remove snooze"
+                icon={<BellIcon color="yellow.600" />}
+                variant="outline"
+                rounded="full"
+                bgColor="yellow.50"
+                colorScheme="yellow"
+                onClick={() =>
+                  setValue(`steps.${index}.snoozedTill`, null, {
+                    shouldDirty: true,
+                  })
+                }
+                size="xs"
+              />
+            </Tooltip>
+          )}
         </Flex>
       </Flex>
     );
