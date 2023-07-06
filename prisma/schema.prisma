@@ -13,12 +13,13 @@ datasource db {
 }
 
 model User {
-  id         Int        @id @default(autoincrement())
-  createdAt  DateTime   @default(now())
-  deletedAt  DateTime?
-  clerkId    String     @unique
-  categories Category[]
-  goals      Goal[]
+  id                 Int        @id @default(autoincrement())
+  createdAt          DateTime   @default(now())
+  deletedAt          DateTime?
+  clerkId            String     @unique
+  showCompletedSteps Boolean    @default(false)
+  categories         Category[]
+  goals              Goal[]
 }
 
 model Goal {
@@ -68,9 +69,10 @@ model Step {
   finishedAt  DateTime?
   snoozedTill DateTime?
   title       String
-  description String?
+  description String?    @db.Text
   position    Int?
   duration    Int?
+  repeats     Int?
   goalId      Int
   goal        Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   categories  Category[]

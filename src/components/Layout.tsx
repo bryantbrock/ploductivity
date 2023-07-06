@@ -248,22 +248,6 @@ export const Layout = ({ children }: Props) => {
             </Flex>
           </Flex>
         ) : null}
-
-        <style jsx global>{`
-          html,
-          body {
-            padding: 0;
-            margin: 0;
-            overscroll-behavior: none;
-            font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-              Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-              sans-serif;
-          }
-
-          * {
-            box-sizing: border-box;
-          }
-        `}</style>
       </Box>
     </>
   );

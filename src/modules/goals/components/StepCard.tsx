@@ -1,6 +1,7 @@
 import { FormInput } from "@/components/form/FormInput";
 import { FormMultiSelect } from "@/components/form/FormMultiSelect";
 import { FormTextarea } from "@/components/form/FormTextArea";
+import { useUser } from "@/hooks/useUser";
 import { inFuture } from "@/utils/inFuture";
 import {
   BellIcon,
@@ -18,6 +19,7 @@ import {
   MenuList,
   Text,
   Tooltip,
+  useBreakpoint,
 } from "@chakra-ui/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -43,6 +45,7 @@ export const StepCard = forwardRef(
     { control, index, step, remove, watch, categories, setValue }: Props,
     ref: ForwardedRef<HTMLInputElement>
   ) => {
+    const { data: user } = useUser();
     const router = useRouter();
     const stepId = parseInt(
       router.asPath.split("#").pop()?.split("-").pop() ?? ""
@@ -52,6 +55,9 @@ export const StepCard = forwardRef(
 
     const isFinished = !!watch(`steps.${index}.finishedAt`);
     const isSnoozed = !!watch(`steps.${index}.snoozedTill`);
+
+    const breakpoint = useBreakpoint();
+    const isBaseOrSmall = breakpoint === "base" || breakpoint === "sm";
 
     const {
       attributes,
@@ -99,6 +105,8 @@ export const StepCard = forwardRef(
       };
     }, [hasHash]);
 
+    if (isFinished && !user?.showCompletedSteps) return null;
+
     return (
       <Flex
         gap={1}
@@ -111,9 +119,10 @@ export const StepCard = forwardRef(
         ref={setNodeRef}
         style={style}
         id={`step-${step.id}`}
+        position="relative"
       >
         <Flex direction="column" flexGrow={1} gap={1}>
-          <Flex gap={1} grow={1}>
+          <Flex gap={1}>
             <FormInput
               control={control}
               name={`steps.${index}.title`}
@@ -135,29 +144,64 @@ export const StepCard = forwardRef(
                 placeholder="0"
                 borderColor="transparent"
                 px={2}
-                pr={9}
+                pr={12}
                 flexGrow={1}
-                maxW="80px"
+                maxW="105px"
+                textAlign="end"
                 _hover={{ borderColor: "gray.200" }}
               />
-              <Text pos="absolute" right={2} top={2}>
-                min
+              <Text
+                pos="absolute"
+                right={2}
+                top={2.5}
+                color="gray.400"
+                fontSize="sm"
+              >
+                min{watch(`steps.${index}.duration`) === 1 ? "" : "s"}
               </Text>
             </Box>
           </Flex>
-          <FormTextarea
-            control={control}
-            name={`steps.${index}.description`}
-            placeholder="Description"
-            borderColor="transparent"
-            hideLabel
-            fontSize="sm"
-            sx={{ resize: "none" }}
-            _hover={{ borderColor: "gray.200", resize: "vertical" }}
-            px={2}
-            py={1}
-            autoGrow
-          />
+          <Flex gap={1}>
+            <FormTextarea
+              control={control}
+              name={`steps.${index}.description`}
+              placeholder="Description"
+              borderColor="transparent"
+              hideLabel
+              fontSize="sm"
+              sx={{ resize: "none" }}
+              _hover={{ borderColor: "gray.200", resize: "vertical" }}
+              px={2}
+              py={1}
+              autoGrow
+            />
+            <Box pos="relative">
+              <FormInput
+                control={control}
+                name={`steps.${index}.repeats`}
+                type="number"
+                hideLabel
+                min={1}
+                placeholder="0"
+                borderColor="transparent"
+                px={2}
+                pr={12}
+                flexGrow={1}
+                maxW="105px"
+                textAlign="end"
+                _hover={{ borderColor: "gray.200" }}
+              />
+              <Text
+                pos="absolute"
+                right={2}
+                top={2.5}
+                color="gray.400"
+                fontSize="sm"
+              >
+                time{watch(`steps.${index}.repeats`) === 1 ? "" : "s"}
+              </Text>
+            </Box>
+          </Flex>
           <FormMultiSelect
             name={`steps.${index}.categories`}
             control={control}
@@ -301,6 +345,11 @@ export const StepCard = forwardRef(
             </Tooltip>
           )}
         </Flex>
+        {!isBaseOrSmall ? (
+          <Box position="absolute" left={-9}>
+            <Text color="gray.200"># {index + 1}</Text>
+          </Box>
+        ) : null}
       </Flex>
     );
   }

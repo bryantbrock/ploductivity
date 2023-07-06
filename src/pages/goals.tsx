@@ -107,15 +107,20 @@ const Index = () => {
           </Flex>
         </Flex>
       ) : !goals.length ? (
-        <Center
-          borderWidth="1px"
-          rounded="md"
-          borderColor="gray.100"
-          p={5}
-          my={2}
-        >
-          <Text>No goals found.</Text>
-        </Center>
+        <Flex gap={2} direction="column">
+          <Center
+            borderWidth="1px"
+            rounded="md"
+            borderColor="gray.100"
+            p={5}
+            my={2}
+          >
+            <Text>No goals found.</Text>
+          </Center>
+          <Button leftIcon={<AddIcon />} onClick={onAddNewGoal}>
+            Add goal
+          </Button>
+        </Flex>
       ) : (
         <Flex direction="column" gap={2} flexGrow={1}>
           {goals.map((goal, i) => (

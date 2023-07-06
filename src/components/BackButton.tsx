@@ -1,13 +1,7 @@
 import { useScrolled } from "@/hooks/useScrolled";
 import { ChevronLeftIcon } from "@chakra-ui/icons";
-import {
-  Box,
-  Flex,
-  IconButton,
-  Link,
-  Text,
-  useBreakpoint,
-} from "@chakra-ui/react";
+import { Box, Flex, IconButton, Text, useBreakpoint } from "@chakra-ui/react";
+import Link from "next/link";
 
 type Props = { href: string; label?: string };
 

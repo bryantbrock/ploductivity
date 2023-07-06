@@ -146,15 +146,24 @@ const Index = () => {
           </Flex>
         </Flex>
       ) : !categories.length ? (
-        <Center
-          borderWidth="1px"
-          rounded="md"
-          borderColor="gray.100"
-          p={5}
-          my={2}
-        >
-          <Text>No categories found.</Text>
-        </Center>
+        <Flex gap={2} direction="column">
+          <Center
+            borderWidth="1px"
+            rounded="md"
+            borderColor="gray.100"
+            p={5}
+            my={2}
+          >
+            <Text>No categories found.</Text>
+          </Center>
+          <Button
+            leftIcon={<AddIcon />}
+            onClick={addNewCategory}
+            isLoading={isCreatingCategory}
+          >
+            Add category
+          </Button>
+        </Flex>
       ) : (
         <Flex direction="column" gap={2} flexGrow={1}>
           {categories.map((category, i) => (

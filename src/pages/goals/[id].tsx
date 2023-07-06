@@ -27,11 +27,12 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { hasDirtyField } from "@/utils/hasDirtyField";
 import omit from "lodash/omit";
 import { pullAll } from "lodash";
 import { BackButton } from "@/components/BackButton";
+import { ShowCompletedSteps } from "@/components/ShowCompletedSteps";
 
 const GoalId = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +58,13 @@ const GoalId = () => {
       where: { id, userId: user?.id ?? 0 },
     },
   });
+
+  const completedStepsCount = useMemo(() => {
+    return (
+      goal?.steps.reduce((acc, step) => (step.finishedAt ? acc + 1 : acc), 0) ??
+      0
+    );
+  }, [goal?.steps]);
 
   const { data: categories = [] } = useFindManyCategorys({
     options: { enabled: !!user?.id && !Number.isNaN(id) },
@@ -131,6 +139,7 @@ const GoalId = () => {
                     finishedAt: step.finishedAt,
                     goal: { connect: { id } },
                     position: index,
+                    repeats: step.repeats,
                     snoozedTill: step.snoozedTill,
                     title: step.title,
                   },
@@ -144,6 +153,7 @@ const GoalId = () => {
                     duration: step.duration,
                     finishedAt: step.finishedAt,
                     position: index,
+                    repeats: step.repeats,
                     snoozedTill: step.snoozedTill,
                     title: step.title,
                   },
@@ -268,9 +278,12 @@ const GoalId = () => {
               _hover={{ borderColor: "gray.200", resize: "vertical" }}
               autoGrow
             />
-            <Text fontWeight={600} mt={4}>
-              Steps
-            </Text>
+            <Flex justify="space-between" align="flex-end">
+              <Text fontWeight={600} fontSize="lg" mt={4}>
+                Steps
+              </Text>
+              <ShowCompletedSteps completedStepsCount={completedStepsCount} />
+            </Flex>
             <DndContext
               collisionDetection={closestCenter}
               sensors={sensors}
@@ -302,6 +315,7 @@ const GoalId = () => {
                     description: "",
                     duration: 5,
                     id: 0,
+                    repeats: 1,
                     title: `Step ${steps.length + 1}`,
                   } as any,
                   { shouldFocus: true }

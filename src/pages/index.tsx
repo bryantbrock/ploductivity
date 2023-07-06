@@ -1,4 +1,11 @@
-import { Center, Flex, IconButton, Skeleton, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Center,
+  Flex,
+  IconButton,
+  Skeleton,
+  Text,
+} from "@chakra-ui/react";
 import { useFindManyGoals } from "prisma-hooks";
 import { useUser } from "@/hooks/useUser";
 import { FunnelIcon } from "@/icons/FunnelIcon";
@@ -6,6 +13,7 @@ import { useMemo, useState } from "react";
 import { Prisma, Step } from "@prisma/client";
 import { StepCard } from "@/modules/index/components/StepCard";
 import { Layout } from "@/components/Layout";
+import Link from "next/link";
 
 const Index = () => {
   const { data: user } = useUser();
@@ -125,7 +133,17 @@ const Index = () => {
           p={5}
           my={2}
         >
-          <Text>No activities found.</Text>
+          <Text>
+            No activities found.{" "}
+            <Box
+              as={Link}
+              href="/goals"
+              textDecoration="underline"
+              fontWeight={600}
+            >
+              Add a goal
+            </Box>
+          </Text>
         </Center>
       ) : (
         <Flex direction="column" gap={2} flexGrow={1}>
