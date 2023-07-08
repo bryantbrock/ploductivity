@@ -10,32 +10,20 @@ import { useFindManyGoals } from "prisma-hooks";
 import { useUser } from "@/hooks/useUser";
 import { FunnelIcon } from "@/icons/FunnelIcon";
 import { useMemo, useState } from "react";
-import { Prisma, Step } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { StepCard } from "@/modules/index/components/StepCard";
 import { Layout } from "@/components/Layout";
 import Link from "next/link";
+import { flattenSequentially } from "@/utils/flattenSequentially";
 
 const Index = () => {
   const { data: user } = useUser();
   const currentTime = useMemo(() => new Date(), []);
-  const [filters, setFilters] = useState<Prisma.GoalWhereInput>({
-    steps: {
-      some: {
-        OR: [{ snoozedTill: { lte: currentTime } }, { snoozedTill: null }],
-        // categories: { some: { name: { in: ["Computer"] } } },
-        finishedAt: null,
-      },
-    },
-  });
+  const [filters, setFilters] = useState<Prisma.StepWhereInput>({});
 
   // TODO: filter by minutes
   // TODO: filter by categories
   // TODO: filter by snoozedTill (show snoozed or not)
-
-  // Note: the app sorts steps based on two pieces of information
-  // 1. If the step does not have a previous step push it to the top
-  // 2. If the step has a previous step (ie a position before it),
-  //    sort the current steps by the `finishedAt` date of the previous step (most recent last)
 
   const {
     data: goals = [],
@@ -45,42 +33,30 @@ const Index = () => {
     options: { enabled: !!user?.id },
     query: {
       include: {
-        _count: { select: { steps: true } },
         steps: {
-          include: { categories: true, goal: true },
-          orderBy: { position: "asc" },
-          where: { finishedAt: null },
+          include: {
+            categories: true,
+            goal: { include: { _count: { select: { steps: true } } } },
+          },
+          orderBy: [{ position: "asc" }],
+          where: {
+            OR: [{ snoozedTill: { lte: currentTime } }, { snoozedTill: null }],
+            finishedAt: null,
+          },
         },
       },
+      orderBy: { createdAt: "asc" },
       where: {
         ...filters,
-        userId: user?.id ?? 0,
+        steps: { some: { finishedAt: null } },
       },
     },
   });
 
-  const sortedGoals = useMemo(() => {
-    const getMostRecentFinishedStep = (steps: Step[]) => {
-      return steps.reduce((latest, current) => {
-        if (!current.finishedAt) return latest;
-        if (!latest) return current.finishedAt;
-
-        return new Date(current.finishedAt) > new Date(latest)
-          ? current.finishedAt
-          : latest;
-      }, null as unknown as Date);
-    };
-
-    return goals.sort((a, b) => {
-      const aFinishedAt = getMostRecentFinishedStep(a.steps);
-      const bFinishedAt = getMostRecentFinishedStep(b.steps);
-
-      if (!aFinishedAt) return -1;
-      if (!bFinishedAt) return 1;
-
-      return new Date(bFinishedAt).getTime() - new Date(aFinishedAt).getTime();
-    });
-  }, [goals]);
+  const sequentialSteps = useMemo(
+    () => flattenSequentially(goals.map((goal) => goal.steps)),
+    [goals]
+  );
 
   return (
     <Layout>
@@ -125,7 +101,7 @@ const Index = () => {
             </Flex>
           </Flex>
         </Flex>
-      ) : !sortedGoals.length ? (
+      ) : !sequentialSteps.length ? (
         <Center
           borderWidth="1px"
           rounded="md"
@@ -147,8 +123,8 @@ const Index = () => {
         </Center>
       ) : (
         <Flex direction="column" gap={2} flexGrow={1}>
-          {sortedGoals.map((goal, i) => (
-            <StepCard key={goal.id} goal={goal} index={i} />
+          {sequentialSteps.map((step, i) => (
+            <StepCard key={step.id} step={step} index={i} />
           ))}
         </Flex>
       )}

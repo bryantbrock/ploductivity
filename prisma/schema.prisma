@@ -73,6 +73,7 @@ model Step {
   position    Int?
   duration    Int?
   repeats     Int?
+  completed   Int?
   goalId      Int
   goal        Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   categories  Category[]

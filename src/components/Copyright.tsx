@@ -7,7 +7,7 @@ export const Copyright = () => {
   if (isBase) return null;
 
   return (
-    <Text align="center" fontSize="sm" color="gray.700" pb={3} mt={5}>
+    <Text align="center" fontSize="xs" color="gray.400" pb={3} mt={5}>
       Copyright © {new Date().getFullYear()} by Brock Software LLC
     </Text>
   );

@@ -22,30 +22,26 @@ import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "react-query";
 
 type Props = {
-  goal: Goal & {
-    steps: (Step & { categories: Category[] })[];
-    _count: { steps: number };
+  step: Step & {
+    categories: Category[];
+    goal: Goal & { _count: { steps: number } };
   };
   index: number;
 };
 
-export const StepCard = ({ goal, index }: Props) => {
-  const step = goal.steps[0];
+export const StepCard = ({ step, index }: Props) => {
+  const count = step.goal._count.steps;
   const isFirst = index === 0;
   const [loading, setLoading] = useState<"snooze" | "finished" | undefined>(
     undefined
   );
 
   const queryClient = useQueryClient();
-  const { mutateAsync: updateStep, isLoading: isUpdatingStep } =
-    useUpdateStep();
+  const { mutateAsync: updateStep } = useUpdateStep();
 
   const percentComplete = useMemo(
-    () =>
-      Math.floor(
-        ((step.position ?? goal._count.steps) / goal._count.steps) * 100
-      ),
-    [goal._count.steps, step.position]
+    () => Math.floor(((step.position ?? count) / count) * 100),
+    [count, step.position]
   );
 
   const onSnooze = useCallback(
@@ -97,15 +93,15 @@ export const StepCard = ({ goal, index }: Props) => {
               color="gray.400"
               as={Link}
               _hover={{ textDecor: "underline" }}
-              href={`/goals/${goal.id}`}
+              href={`/goals/${step.goalId}`}
             >
-              {goal.title.toUpperCase()}
+              {step.goal.title.toUpperCase()}
             </Text>
             <Text
               fontWeight="semibold"
               as={Link}
               _hover={{ textDecor: "underline" }}
-              href={`/goals/${goal.id}#step-${step.id}`}
+              href={`/goals/${step.goalId}#step-${step.id}`}
             >
               {step.title}
             </Text>

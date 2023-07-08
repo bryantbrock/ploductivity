@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/crons/monitor-repeating-steps",
+      "schedule": "0 1 * * *"
+    }
+  ]
+}

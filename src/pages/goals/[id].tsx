@@ -125,42 +125,46 @@ const GoalId = () => {
       // Update steps
       if (dirtyFields.steps?.length) {
         await Promise.all(
-          steps.map((step, index) =>
-            hasDirtyField(dirtyFields.steps?.[index])
-              ? upsertStep({
-                  create: {
-                    categories: {
-                      connect: step.categories.map((c) => ({
-                        id: c.id,
-                      })),
-                    },
-                    description: step.description,
-                    duration: step.duration,
-                    finishedAt: step.finishedAt,
-                    goal: { connect: { id } },
-                    position: index,
-                    repeats: step.repeats,
-                    snoozedTill: step.snoozedTill,
-                    title: step.title,
+          steps.map((step, index) => {
+            if (hasDirtyField(dirtyFields.steps?.[index])) {
+              const baseValues = {
+                completed: step.completed,
+                description: step.description,
+                duration: step.duration,
+                finishedAt:
+                  step.completed === step.repeats && !step.finishedAt
+                    ? new Date()
+                    : step.finishedAt,
+                position: index,
+                repeats: step.repeats,
+                snoozedTill: step.snoozedTill,
+                title: step.title,
+              };
+
+              return upsertStep({
+                create: {
+                  categories: {
+                    connect: step.categories.map((c) => ({
+                      id: c.id,
+                    })),
                   },
-                  update: {
-                    categories: {
-                      set: step.categories.map((c) => ({
-                        id: c.id,
-                      })),
-                    },
-                    description: step.description,
-                    duration: step.duration,
-                    finishedAt: step.finishedAt,
-                    position: index,
-                    repeats: step.repeats,
-                    snoozedTill: step.snoozedTill,
-                    title: step.title,
+                  goal: { connect: { id } },
+                  ...baseValues,
+                },
+                update: {
+                  categories: {
+                    set: step.categories.map((c) => ({
+                      id: c.id,
+                    })),
                   },
-                  where: { id: step.id },
-                })
-              : Promise.resolve(step)
-          )
+                  ...baseValues,
+                },
+                where: { id: step.id },
+              });
+            } else {
+              return Promise.resolve(step);
+            }
+          })
         );
       }
 

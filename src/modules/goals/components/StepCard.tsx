@@ -19,7 +19,6 @@ import {
   MenuList,
   Text,
   Tooltip,
-  useBreakpoint,
 } from "@chakra-ui/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -55,9 +54,7 @@ export const StepCard = forwardRef(
 
     const isFinished = !!watch(`steps.${index}.finishedAt`);
     const isSnoozed = !!watch(`steps.${index}.snoozedTill`);
-
-    const breakpoint = useBreakpoint();
-    const isBaseOrSmall = breakpoint === "base" || breakpoint === "sm";
+    const repeats = watch(`steps.${index}.repeats`);
 
     const {
       attributes,
@@ -99,6 +96,8 @@ export const StepCard = forwardRef(
           window.addEventListener("scroll", handleScroll, { passive: true }),
         500
       );
+
+      setTimeout(() => handleScroll(), 3000);
 
       return () => {
         window.removeEventListener("scroll", handleScroll);
@@ -175,32 +174,62 @@ export const StepCard = forwardRef(
               py={1}
               autoGrow
             />
-            <Box pos="relative">
-              <FormInput
-                control={control}
-                name={`steps.${index}.repeats`}
-                type="number"
-                hideLabel
-                min={1}
-                placeholder="0"
-                borderColor="transparent"
-                px={2}
-                pr={12}
-                flexGrow={1}
-                maxW="105px"
-                textAlign="end"
-                _hover={{ borderColor: "gray.200" }}
-              />
-              <Text
-                pos="absolute"
-                right={2}
-                top={2.5}
-                color="gray.400"
-                fontSize="sm"
-              >
-                time{watch(`steps.${index}.repeats`) === 1 ? "" : "s"}
-              </Text>
-            </Box>
+            <Flex direction="column" gap={1}>
+              <Box pos="relative">
+                <FormInput
+                  control={control}
+                  name={`steps.${index}.repeats`}
+                  type="number"
+                  hideLabel
+                  min={1}
+                  placeholder="0"
+                  borderColor="transparent"
+                  px={2}
+                  pr={12}
+                  flexGrow={1}
+                  maxW="105px"
+                  textAlign="end"
+                  _hover={{ borderColor: "gray.200" }}
+                />
+                <Text
+                  pos="absolute"
+                  right={2}
+                  top={2.5}
+                  color="gray.400"
+                  fontSize="sm"
+                >
+                  time{repeats === 1 ? "" : "s"}
+                </Text>
+              </Box>
+              {repeats && repeats > 1 ? (
+                <Box pos="relative">
+                  <FormInput
+                    control={control}
+                    name={`steps.${index}.completed`}
+                    type="number"
+                    hideLabel
+                    max={repeats}
+                    placeholder="0"
+                    borderColor="transparent"
+                    px={2}
+                    pr={12}
+                    flexGrow={1}
+                    maxW="105px"
+                    textAlign="end"
+                    _hover={{ borderColor: "gray.200" }}
+                  />
+                  <Text
+                    pos="absolute"
+                    right={2}
+                    top={2.5}
+                    color="gray.400"
+                    fontSize="sm"
+                  >
+                    done
+                  </Text>
+                </Box>
+              ) : null}
+            </Flex>
           </Flex>
           <FormMultiSelect
             name={`steps.${index}.categories`}
@@ -239,10 +268,11 @@ export const StepCard = forwardRef(
           <Tooltip
             label={isFinished ? "Mark unfinished" : "Mark finished"}
             hasArrow
+            rounded="md"
             placement="left"
           >
             <IconButton
-              aria-label="Delete step"
+              aria-label="Finish step"
               icon={<CheckIcon color={isFinished ? "green.600" : "gray.500"} />}
               variant="outline"
               rounded="full"
@@ -345,11 +375,6 @@ export const StepCard = forwardRef(
             </Tooltip>
           )}
         </Flex>
-        {!isBaseOrSmall ? (
-          <Box position="absolute" left={-9}>
-            <Text color="gray.200"># {index + 1}</Text>
-          </Box>
-        ) : null}
       </Flex>
     );
   }
