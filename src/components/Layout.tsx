@@ -170,8 +170,8 @@ export const Layout = ({ children }: Props) => {
               <Center h="32px" w="32px">
                 <HomeIcon
                   variant="filled"
-                  h="20px"
-                  w="20px"
+                  h="26px"
+                  w="26px"
                   color={pathname === "/" ? "blue.500" : "gray.600"}
                 />
               </Center>
@@ -193,8 +193,8 @@ export const Layout = ({ children }: Props) => {
             >
               <Center h="32px" w="32px">
                 <ArrowTrendingUpIcon
-                  h="20px"
-                  w="20px"
+                  h="26px"
+                  w="26px"
                   color={basePath === "goals" ? "blue.500" : "gray.600"}
                 />
               </Center>
@@ -218,8 +218,8 @@ export const Layout = ({ children }: Props) => {
               <Center h="32px" w="32px">
                 <Squares2x2Icon
                   variant="filled"
-                  h="20px"
-                  w="20px"
+                  h="26px"
+                  w="26px"
                   color={basePath === "categories" ? "blue.500" : "gray.600"}
                 />
               </Center>

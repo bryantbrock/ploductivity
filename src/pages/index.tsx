@@ -49,6 +49,7 @@ const Index = () => {
       where: {
         ...filters,
         steps: { some: { finishedAt: null } },
+        userId: user?.id,
       },
     },
   });
