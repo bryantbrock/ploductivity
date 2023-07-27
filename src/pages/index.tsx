@@ -1,16 +1,7 @@
-import {
-  Box,
-  Center,
-  Flex,
-  IconButton,
-  Skeleton,
-  Text,
-} from "@chakra-ui/react";
-import { useFindManyGoals } from "prisma-hooks";
+import { Box, Center, Flex, Skeleton, Text } from "@chakra-ui/react";
+import { useFindManyCategorys, useFindManyGoals } from "prisma-hooks";
 import { useUser } from "@/hooks/useUser";
-import { FunnelIcon } from "@/icons/FunnelIcon";
 import { useMemo, useState } from "react";
-import { Prisma } from "@prisma/client";
 import { StepCard } from "@/modules/index/components/StepCard";
 import { Layout } from "@/components/Layout";
 import Link from "next/link";
@@ -19,7 +10,7 @@ import { flattenSequentially } from "@/utils/flattenSequentially";
 const Index = () => {
   const { data: user } = useUser();
   const currentTime = useMemo(() => new Date(), []);
-  const [filters, setFilters] = useState<Prisma.StepWhereInput>({});
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
 
   // TODO: filter by minutes
   // TODO: filter by categories
@@ -47,11 +38,22 @@ const Index = () => {
       },
       orderBy: { createdAt: "asc" },
       where: {
-        ...filters,
-        steps: { some: { finishedAt: null } },
+        steps: {
+          some: {
+            finishedAt: null,
+            ...(selectedCategories.length
+              ? { categories: { some: { id: { in: selectedCategories } } } }
+              : undefined),
+          },
+        },
         userId: user?.id,
       },
     },
+  });
+
+  const { data: categries = [] } = useFindManyCategorys({
+    options: { enabled: !!user?.id },
+    query: { where: { userId: user?.id } },
   });
 
   const sequentialSteps = useMemo(
@@ -61,13 +63,44 @@ const Index = () => {
 
   return (
     <Layout>
-      <Flex py={4} gap={2}>
-        <IconButton
-          variant="outline"
-          aria-label="filters"
-          bgColor="white"
-          icon={<FunnelIcon />}
-        />
+      <Flex
+        py={1}
+        gap={2}
+        overflowX="scroll"
+        my={2}
+        sx={{
+          "&::-webkit-scrollbar": { display: "none" },
+          "-ms-overflow-style": "none",
+          scrollbarWidth: 0,
+        }}
+      >
+        {categries.map((category) => {
+          const isSelected = selectedCategories.includes(category.id);
+
+          return (
+            <Flex
+              key={category.id}
+              borderWidth="1px"
+              borderColor={isSelected ? "blue.300" : "gray.200"}
+              rounded="md"
+              minW="fit-content"
+              bg={isSelected ? "blue.50" : "white"}
+              fontSize="sm"
+              p={2}
+              _hover={{ bg: isSelected ? "blue.50" : "gray.50" }}
+              cursor="pointer"
+              onClick={() =>
+                setSelectedCategories((prev) =>
+                  prev.includes(category.id)
+                    ? prev.filter((id) => id !== category.id)
+                    : [...prev, category.id]
+                )
+              }
+            >
+              {category.name}
+            </Flex>
+          );
+        })}
       </Flex>
       {isLoading || !isFetched ? (
         <Flex direction="column" gap={2}>
