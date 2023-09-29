@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "rm -rf .next && yarn && npx prisma generate && npx prisma-hooks generate && next dev",
     "build": "npx prisma generate && npx prisma-hooks generate && next build",
     "start": "next start",
     "lint": "next lint",

@@ -64,10 +64,10 @@ const Index = () => {
   return (
     <Layout>
       <Flex
-        py={1}
+        py={categries.length ? 1 : undefined}
         gap={2}
         overflowX="scroll"
-        my={2}
+        mt={categries.length ? 4 : undefined}
         sx={{
           "&::-webkit-scrollbar": { display: "none" },
           "-ms-overflow-style": "none",
@@ -103,11 +103,10 @@ const Index = () => {
         })}
       </Flex>
       {isLoading || !isFetched ? (
-        <Flex direction="column" gap={2}>
+        <Flex direction="column" gap={2} mt={4}>
           <Flex
             gap={2}
             direction="column"
-            mt={4}
             borderWidth="1px"
             rounded="md"
             borderColor="gray.100"
@@ -141,7 +140,7 @@ const Index = () => {
           rounded="md"
           borderColor="gray.100"
           p={5}
-          my={2}
+          mt={4}
         >
           <Text>
             No activities found.{" "}
@@ -156,7 +155,7 @@ const Index = () => {
           </Text>
         </Center>
       ) : (
-        <Flex direction="column" gap={2} flexGrow={1}>
+        <Flex direction="column" gap={2} flexGrow={1} mt={4}>
           {sequentialSteps.map((step, i) => (
             <StepCard key={step.id} step={step} index={i} />
           ))}

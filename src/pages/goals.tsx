@@ -61,7 +61,12 @@ const Index = () => {
           separator={<ChevronRightIcon color="gray.500" />}
         >
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} href="/goals" fontWeight="semibold">
+            <BreadcrumbLink
+              as={Link}
+              href="/goals"
+              fontWeight="semibold"
+              fontSize="xl"
+            >
               Goals
             </BreadcrumbLink>
           </BreadcrumbItem>

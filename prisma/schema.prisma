@@ -7,9 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider  = "postgres"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -33,8 +33,6 @@ model Goal {
   blockers     GoalToGoal[] @relation("Blockers")
   dependencies GoalToGoal[] @relation("Dependents")
   steps        Step[]
-
-  @@index([userId])
 }
 
 model Category {
@@ -45,8 +43,6 @@ model Category {
   userId    Int
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   steps     Step[]
-
-  @@index([userId])
 }
 
 model GoalToGoal {
@@ -57,9 +53,6 @@ model GoalToGoal {
   blocker     Goal      @relation("Blockers", fields: [blockerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   dependentId Int
   dependent   Goal      @relation("Dependents", fields: [dependentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@index([blockerId])
-  @@index([dependentId])
 }
 
 model Step {
@@ -77,6 +70,4 @@ model Step {
   goalId      Int
   goal        Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   categories  Category[]
-
-  @@index([goalId])
 }
